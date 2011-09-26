@@ -552,4 +552,4 @@ static ErlNifFunc nif_funcs[] =
     {"from_geom", 1, from_geom}
 };
 
-ERL_NIF_INIT(erlgeos, nif_funcs, &load, NULL, NULL, unload);
+ERL_NIF_INIT(erlgeom, nif_funcs, &load, NULL, NULL, unload);
