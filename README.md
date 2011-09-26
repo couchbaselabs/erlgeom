@@ -1,15 +1,11 @@
-Change the path in erlgeos.erl to your erlgeos.so file. The path is directly
-to the file without the .so extension (it must be an absolute path).
+Compile the C and Erlang file:
 
-Then compile the C and Erlang file:
-
-    gcc -fPIC -g -Wall -shared -o erlgeos.so erlgeos.c -lgeos_c
-    erlc erlgeos.erl
+    ./rebar compile
 
 Here's an example session in the erlang shell. See the erlgeos.erl file for
 more examples.
 
-    $ erl
+    $ erl -pa ebin
     Erlang R14B03 (erts-5.8.4) [source] [64-bit] [smp:4:4] [rq:4] [async-threads:0] [kernel-poll:false]
 
     Eshell V5.8.4  (abort with ^G)

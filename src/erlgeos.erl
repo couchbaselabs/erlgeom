@@ -21,8 +21,23 @@
 
 -on_load(init/0).
 
+
+%init() ->
+%    erlang:load_nif("/home/vmx/src/couchbase/erlgeom/erlgeos", 0).
 init() ->
-    erlang:load_nif("/home/vmx/src/couchbase/erlgeom/erlgeos", 0).
+    SoName = case code:priv_dir(?MODULE) of
+    {error, bad_name} ->
+        case filelib:is_dir(filename:join(["..", "priv"])) of
+        true ->
+            filename:join(["..", "priv", "erlgeos"]);
+        false ->
+            filename:join(["priv", "erlgeos"])
+        end;
+    Dir ->
+        filename:join(Dir, "erlgeos")
+    end,
+    (catch erlang:load_nif(SoName, 0)).
+
 
 hello() ->
     "NIF library not loaded".
@@ -40,6 +55,7 @@ to_geom(_Geom) ->
 % @doc Convert a GEOS geometry to a GeoCouch geometry
 from_geom(_Geom) ->
     "NIF library not loaded".
+
 
 
 %% tests
