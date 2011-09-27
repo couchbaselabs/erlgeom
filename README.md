@@ -1,6 +1,10 @@
-Compile the C and Erlang file:
+Build it with:
 
-    ./rebar compile
+    make
+
+Run tests with:
+
+    make check
 
 Here's an example session in the erlang shell. See the src/erlgeom.erl file for
 more examples.
