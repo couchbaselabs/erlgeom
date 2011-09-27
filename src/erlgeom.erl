@@ -17,8 +17,6 @@
 -export([init/0, hello/0, disjoint/2, from_geom/1, to_geom/1,
     topology_preserve_simplify/2]).
 
--export([test/0, disjoint_test/0, simplify_test/0]).
-
 -on_load(init/0).
 
 
