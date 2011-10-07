@@ -14,7 +14,7 @@
 
 -module(erlgeom).
 
--export([init/0, hello/0, disjoint/2, from_geom/1, to_geom/1,
+-export([hello/0, disjoint/2, from_geom/1, to_geom/1,
     topology_preserve_simplify/2]).
 
 -on_load(init/0).
