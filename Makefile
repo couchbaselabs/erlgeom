@@ -14,4 +14,4 @@ check-verbose: test/etap.beam
 
 clean:
 	./rebar clean
-	rm -fr priv ebin
+	rm -fr priv
