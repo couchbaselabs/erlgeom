@@ -17,13 +17,15 @@ main(_) ->
     code:add_pathz("test"),
     code:add_pathz("ebin"),
 
-    etap:plan(7),
+    etap:plan(9),
     test_point(),
     test_linestring(),
     test_polygon(),
     test_multipoint(),
     test_multilinestring(),
     test_multipolygon(),
+    test_geometrycollection(),
+    test_invalid_geoms(),
 
     etap:end_tests().
 
@@ -67,3 +69,10 @@ test_geometrycollection() ->
     Gc = {'GeometryCollection',[{'Point',[100.0, 0.0]},{'LineString',[[101.0, 0.0],[102.0, 1.0]]}]},
     Gc1 = erlgeom:to_geom(Gc),
     etap:is(erlgeom:from_geom(Gc1), Gc, "GeometryCollection conversion works").
+
+test_invalid_geoms() ->
+    Pt = {'MultiPoint',[0.0, 10]},
+    etap:throws_ok(
+        fun() -> erlgeom:to_geom_validate(Pt) end,
+        "Not every position of the MultiPoint is a valid Point",
+        "Invalid geometry").
