@@ -14,7 +14,7 @@
 
 -module(erlgeom).
 
--export([hello/0, disjoint/2, from_geom/1, to_geom/1,
+-export([disjoint/2, from_geom/1, to_geom/1,
     topology_preserve_simplify/2, to_geom_validate/1]).
 
 -ifdef(makecheck).
@@ -37,10 +37,6 @@ init() ->
         filename:join(Dir, "erlgeom")
     end,
     (catch erlang:load_nif(SoName, 0)).
-
-
-hello() ->
-    "NIF library not loaded".
 
 disjoint(_Geom1, _Geom2) ->
     "NIF library not loaded".

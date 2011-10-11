@@ -462,12 +462,6 @@ unload(ErlNifEnv* env, void* priv_data)
     finishGEOS();
 }
 
-
-static ERL_NIF_TERM hello(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    return enif_make_string(env, "Hello world!", ERL_NIF_LATIN1);
-}
-
 static ERL_NIF_TERM
 disjoint(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -545,7 +539,6 @@ ERL_NIF_TERM from_geom(ErlNifEnv* env, int argc,
 
 static ErlNifFunc nif_funcs[] =
 {
-    {"hello", 0, hello},
     {"disjoint", 2, disjoint},
     {"topology_preserve_simplify", 2, topology_preserve_simplify},
     {"to_geom", 1, to_geom},
