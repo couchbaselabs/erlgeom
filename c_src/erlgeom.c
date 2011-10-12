@@ -515,7 +515,7 @@ ERL_NIF_TERM to_geom(ErlNifEnv* env, int argc,
     GEOSGeometry **geom = enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
 
     *geom = eterm_to_geom(env, argv);
-    printf("geom: %s\r\n", GEOSGeomToWKT(*geom));
+    //printf("geom: %s\r\n", GEOSGeomToWKT(*geom));
     eterm = enif_make_resource(env, geom);
     enif_release_resource(geom);
     return eterm;
