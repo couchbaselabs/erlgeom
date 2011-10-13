@@ -4,7 +4,7 @@ all: build
 	erlc -o test/ $<
 
 build: c_src/erlgeom.c
-	./rebar -C rebar_default.config compile
+	./rebar compile
 
 build-for-check: clean
 	./rebar -C rebar_makecheck.config compile
