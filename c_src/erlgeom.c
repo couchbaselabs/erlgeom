@@ -49,8 +49,8 @@ set_GEOSCoordSeq_from_eterm_list(GEOSCoordSequence *seq, int pos,
         if (enif_get_int(env, head, &int_coord)) {
             dbl_coord = int_coord;
         }
-        else {
-          enif_get_double(env, head, &dbl_coord);
+        else if (!enif_get_double(env, head, &dbl_coord)) {
+            return 0;
         }
         GEOSCoordSeq_setY(seq, pos, dbl_coord);
         return 1;
@@ -319,7 +319,7 @@ geom_to_eterm_polygon_coords(ErlNifEnv *env, const GEOSGeometry *geom)
 }
 
 // Creates the coordinates for a multi-geometry.
-ERL_NIF_TERM
+static ERL_NIF_TERM
 geom_to_eterm_multi_coords(ErlNifEnv *env, const GEOSGeometry *multi_geom,
         ERL_NIF_TERM(*geom_to_eterm_coords)(ErlNifEnv *env, const GEOSGeometry *geom))
 {
@@ -339,7 +339,7 @@ geom_to_eterm_multi_coords(ErlNifEnv *env, const GEOSGeometry *multi_geom,
     return coords;
 }
 
-ERL_NIF_TERM
+static ERL_NIF_TERM
 geom_to_eterm(ErlNifEnv *env, const GEOSGeometry *geom)
 {
     ERL_NIF_TERM coords;
@@ -416,7 +416,7 @@ geom_to_eterm(ErlNifEnv *env, const GEOSGeometry *geom)
 
 
 /* From http://trac.gispython.org/lab/browser/PCL/trunk/PCL-Core/cartography/geometry/_geommodule.c */
-void
+static void
 notice_handler(const char *fmt, ...) {
     va_list ap;
     fprintf(stderr, "NOTICE: ");
@@ -427,7 +427,7 @@ notice_handler(const char *fmt, ...) {
 }
 
 /* From http://trac.gispython.org/lab/browser/PCL/trunk/PCL-Core/cartography/geometry/_geommodule.c */
-void
+static void
 error_handler(const char *fmt, ...) {
     va_list ap;
     va_start (ap, fmt);
@@ -436,13 +436,11 @@ error_handler(const char *fmt, ...) {
     fprintf(stderr, "\n" );
 }
 
-void
+static void
 geom_destroy(ErlNifEnv *env, void *obj)
 {
-    // XXX vmx 20110921: Cleanup leads to segfaults. Comment them out for
-    //     now. Happy leaking!
-    //GEOSGeometry *geom = (GEOSGeometry*)obj;
-    //GEOSGeom_destroy(geom);
+    GEOSGeometry **geom = (GEOSGeometry**)obj;
+    GEOSGeom_destroy(*geom);
 }
 
 /* From https://github.com/iamaleksey/iconverl/blob/master/c_src/iconverl.c */
@@ -498,8 +496,8 @@ topology_preserve_simplify(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (enif_get_int(env, argv[1], &int_tol)) {
         dbl_tol = int_tol;
     }
-    else {
-        enif_get_double(env, argv[1], &dbl_tol);
+    else if (!enif_get_double(env, argv[1], &dbl_tol)) {
+        return 0;
     }
 
     simpler_geom = GEOSTopologyPreserveSimplify(*geom, dbl_tol);
@@ -515,7 +513,6 @@ ERL_NIF_TERM to_geom(ErlNifEnv* env, int argc,
     GEOSGeometry **geom = enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
 
     *geom = eterm_to_geom(env, argv);
-    //printf("geom: %s\r\n", GEOSGeomToWKT(*geom));
     eterm = enif_make_resource(env, geom);
     enif_release_resource(geom);
     return eterm;
@@ -532,7 +529,6 @@ ERL_NIF_TERM from_geom(ErlNifEnv* env, int argc,
     }
 
     eterm = geom_to_eterm(env, *geom);
-    //printf("geom: %s\r\n", GEOSGeomToWKT(*geom));
     return eterm;
 }
 
