@@ -40,8 +40,8 @@ set_GEOSCoordSeq_from_eterm_list(GEOSCoordSequence *seq, int pos,
         if (enif_get_int(env, head, &int_coord)) {
             dbl_coord = int_coord;
         }
-        else {
-            enif_get_double(env, head, &dbl_coord);
+        else if (!enif_get_double(env, head, &dbl_coord)) {
+            return 0;
         }
         GEOSCoordSeq_setX(seq, pos, dbl_coord);
 
@@ -238,7 +238,6 @@ eterm_to_geom(ErlNifEnv *env, const ERL_NIF_TERM *eterm)
         //}
     }
     else {
-        printf("ERROR: Invalid geoemtry type\r\n");
         return NULL;
     }
     //printf("geom: %s\r\n", GEOSGeomToWKT(geom));
