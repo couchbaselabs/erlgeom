@@ -17,9 +17,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "erl_nif.h"
+#include <geos_c.h>
 
-#include "geos_c.h"
+#include "erl_nif.h"
 
 /* From comp.lang.c FAQ Question 17.3 */
 #define Streq(s1, s2) (strcmp((s1), (s2)) == 0)
