@@ -253,7 +253,7 @@ GEOSCoordSequence_to_eterm_list(ErlNifEnv *env,
     int i = 0;
     double coordx, coordy;
     ERL_NIF_TERM *coords_list;
-    ERL_NIF_TERM coords;
+    ERL_NIF_TERM coords, coords_list_eterm;
 
     coords_list = malloc(sizeof(ERL_NIF_TERM)*len);
     for(i=0; i<len; i++) {
@@ -263,7 +263,9 @@ GEOSCoordSequence_to_eterm_list(ErlNifEnv *env,
             enif_make_double(env, coordy));
         coords_list[i] = coords;
     }
-    return enif_make_list_from_array(env, coords_list, len);
+    coords_list_eterm = enif_make_list_from_array(env, coords_list, len);
+    free(coords_list);
+    return coords_list_eterm;
 }
 
 ERL_NIF_TERM
