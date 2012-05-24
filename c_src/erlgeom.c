@@ -252,9 +252,10 @@ GEOSCoordSequence_to_eterm_list(ErlNifEnv *env,
         const GEOSCoordSequence *coords_seq, unsigned int len) {
     int i = 0;
     double coordx, coordy;
-    ERL_NIF_TERM coords_list[len];
+    ERL_NIF_TERM *coords_list;
     ERL_NIF_TERM coords;
 
+    coords_list = malloc(sizeof(ERL_NIF_TERM)*len);
     for(i=0; i<len; i++) {
         GEOSCoordSeq_getX(coords_seq, i, &coordx);
         GEOSCoordSeq_getY(coords_seq, i, &coordy);
