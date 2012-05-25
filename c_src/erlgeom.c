@@ -250,7 +250,7 @@ eterm_to_geom(ErlNifEnv *env, const ERL_NIF_TERM *eterm)
 ERL_NIF_TERM
 GEOSCoordSequence_to_eterm_list(ErlNifEnv *env,
         const GEOSCoordSequence *coords_seq, unsigned int len) {
-    int i = 0;
+    unsigned int i = 0;
     double coordx, coordy;
     ERL_NIF_TERM *coords_list;
     ERL_NIF_TERM coords, coords_list_eterm;
