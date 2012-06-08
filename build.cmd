@@ -24,7 +24,7 @@ xcopy src\*      rel\%GEOAPP%\src\ /y /f
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: update erlgeom in current erlang release
 robocopy rel\%GEOAPP% %ERL_PATH%\lib\%GEOAPP% -mir
-path=%path%;%ERL_PATH%\lib\%GEOAPP%;
+path=%path%;%ERL_PATH%\lib\%GEOAPP%\priv;
 start /max werl
 :::::::::::::::::::::::::::
 endlocal
