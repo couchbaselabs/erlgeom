@@ -1,4 +1,10 @@
 *.beam
 *.o
 *.so
+*.dll
+*.exp
+*.lib
+*.pdb
 erl_crash.dump
+
+deps/
