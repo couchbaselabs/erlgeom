@@ -41,19 +41,19 @@ integer type headers.
 - install cmake
 - run `setenv.cmd /x86 /release`
 
-    wget http://download.osgeo.org/geos/geos-3.3.4.tar.bz2
-    7z x -y geos-*.bz2
-    7z x -y -ogeos geos-*.tar
+        wget http://download.osgeo.org/geos/geos-3.3.4.tar.bz2
+        7z x -y geos-*.bz2
+        7z x -y -ogeos geos-*.tar
 
 - finally, build geos:
 
-    cd geos
-    setenv.cmd /x86 /release
-    path=%path%;c:\mozilla-build\7zip;c:\opt\cmake\bin;c:\erlang\bin;c:\openssl\bin;
-    mkdir dist build & cd build
-    cmake -G "NMake Makefiles" ..
-    cmake -DCMAKE_INSTALL_PREFIX=..\dist -DBUILD_SHARED_LIBS=OFF ..
-    cmake --build ..\build --target install --config Release
+        cd geos
+        setenv.cmd /x86 /release
+        path=%path%;c:\mozilla-build\7zip;c:\opt\cmake\bin;c:\erlang\bin;c:\openssl\bin;
+        mkdir dist build & cd build
+        cmake -G "NMake Makefiles" ..
+        cmake -DCMAKE_INSTALL_PREFIX=..\dist -DBUILD_SHARED_LIBS=OFF ..
+        cmake --build ..\build --target install --config Release
 
 - copy this dist folder as erlgeom/deps/geos
 - alter build.cmd as required to point to your erlang installation
