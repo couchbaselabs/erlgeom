@@ -27,3 +27,21 @@ more examples.
     5> erlgeom:disjoint(Geom1, Geom3).
     true
     6>
+
+
+On Windows
+----------
+
+You need to have GEOS installed, let's say it was installed to `C:\cygwin\opt\couchbase`.
+
+Open a shell which has all compilers and the MSVC environment set up (e.g. the Windows SDK 7.1 Command Prompt).
+
+Now set it up so that GEOS and Erlang can be found:
+
+    SET INCLUDE=%INCLUDE%;C:\cygwin\opt\couchbase\include
+    SET LIB=%LIB%;C:\cygwin\opt\couchbase\lib
+    SET PATH=%PATH%;C:\cygwin\opt\couchbase\bin;C:\erl5.9.1\bin
+
+And finally compile the whole thing:
+
+    rebar compile
