@@ -14,9 +14,18 @@
 
 -module(erlgeom).
 
--export([disjoint/2, from_geom/1, to_geom/1,
-    topology_preserve_simplify/2, to_geom_validate/1]).
-
+-export([
+    to_geom_validate/1,
+    disjoint/2,
+    from_geom/1,
+    get_centroid/1,
+    get_centroid_geom/1,
+    intersection/2,
+    intersects/2,
+    is_valid/1,
+    topology_preserve_simplify/2,
+    to_geom/1
+    ]).
 -ifdef(makecheck).
 -compile(export_all).
 -endif.
@@ -39,6 +48,21 @@ init() ->
     (catch erlang:load_nif(SoName, 0)).
 
 disjoint(_Geom1, _Geom2) ->
+    "NIF library not loaded".
+
+get_centroid(_Geom1) ->
+    "NIF library not loaded".
+
+get_centroid_geom(_Geom1) ->
+    "NIF library not loaded".
+
+intersection(_Geom1, _Geom2) ->
+    "NIF library not loaded".
+
+intersects(_Geom1, _Geom2) ->
+    "NIF library not loaded".
+
+is_valid(_Geom1) ->
     "NIF library not loaded".
 
 topology_preserve_simplify(_Geom1, _Tolerance) ->

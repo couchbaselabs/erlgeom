@@ -456,11 +456,19 @@ load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
     return 0;
 }
+
 void
 unload(ErlNifEnv* env, void* priv_data)
 {
     finishGEOS();
 }
+
+
+/************************************************************************
+ *
+ *  Binary predicates - return error on exception, true, false
+ *
+ ***********************************************************************/
 
 static ERL_NIF_TERM
 disjoint(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -481,6 +489,98 @@ disjoint(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     else {
         return enif_make_atom(env, "false");
     }
+}
+
+static ERL_NIF_TERM
+intersects(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSGeometry **geom1;
+    GEOSGeometry **geom2;
+
+    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
+        return 0;
+    }
+    if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom2)) {
+        return 0;
+    }
+
+    int intersects;
+    if ((intersects = GEOSIntersects(*geom1, *geom2)) == 1 ) {
+        return enif_make_atom(env, "true");
+    }
+    else if (intersects == 0) {
+        return enif_make_atom(env, "false");
+    }
+    else {
+        return enif_make_atom(env, "error");
+    }
+}
+
+
+/************************************************************************
+ *
+ * Topology operations - return NULL on exception.
+ *
+ ***********************************************************************/
+
+static ERL_NIF_TERM
+intersection(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSGeometry **geom1;
+    GEOSGeometry **geom2;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
+        return 0;
+    }
+
+    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom2)) {
+        return 0;
+    }
+
+    GEOSGeometry **intersection_geom = \
+        enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+
+    *intersection_geom = GEOSIntersection(*geom1, *geom2);
+    eterm = enif_make_resource(env, intersection_geom);
+    enif_release_resource(intersection_geom);
+    return eterm;
+}
+
+static ERL_NIF_TERM
+get_centroid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSGeometry **geom;
+    GEOSGeometry *centroid_geom;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom)) {
+        return 0;
+    }
+
+    centroid_geom = GEOSGetCentroid(*geom);
+    eterm = geom_to_eterm(env, centroid_geom);
+    GEOSGeom_destroy(centroid_geom);
+    return eterm;
+}
+
+static ERL_NIF_TERM
+get_centroid_geom(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSGeometry **geom;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom)) {
+        return 0;
+    }
+
+    GEOSGeometry **centroid_geom = \
+        enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+
+    *centroid_geom = GEOSGetCentroid(*geom);
+    eterm = enif_make_resource(env, centroid_geom);
+    enif_release_resource(centroid_geom);
+    return eterm;
 }
 
 static ERL_NIF_TERM
@@ -508,11 +608,46 @@ topology_preserve_simplify(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return eterm;
 }
 
+
+/************************************************************************
+ *
+ *  Validity checking
+ *
+ ***********************************************************************/
+
+static ERL_NIF_TERM
+is_valid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSGeometry **geom1;
+
+    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
+        return 0;
+    }
+
+    int isvalid;
+    if ((isvalid = GEOSisValid(*geom1)) == 1 ) {
+        return enif_make_atom(env, "true");
+    }
+    else if (isvalid == 0) {
+        return enif_make_atom(env, "false");
+    }
+    else {
+        return enif_make_atom(env, "error");
+    }
+}
+
+/************************************************************************
+ *
+ *  Erlang-GEOS Translation
+ *
+ ***********************************************************************/
+
 static
 ERL_NIF_TERM to_geom(ErlNifEnv* env, int argc,
         const ERL_NIF_TERM argv[]) {
     ERL_NIF_TERM eterm;
-    GEOSGeometry **geom = enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+    GEOSGeometry **geom = \
+        enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
 
     *geom = eterm_to_geom(env, argv);
     eterm = enif_make_resource(env, geom);
@@ -538,9 +673,14 @@ ERL_NIF_TERM from_geom(ErlNifEnv* env, int argc,
 static ErlNifFunc nif_funcs[] =
 {
     {"disjoint", 2, disjoint},
+    {"from_geom", 1, from_geom},
+    {"get_centroid", 1, get_centroid},
+    {"get_centroid_geom", 1, get_centroid_geom},
+    {"intersection", 2, intersection},
+    {"intersects", 2, intersects},
+    {"is_valid", 1, is_valid},
     {"topology_preserve_simplify", 2, topology_preserve_simplify},
-    {"to_geom", 1, to_geom},
-    {"from_geom", 1, from_geom}
+    {"to_geom", 1, to_geom}
 };
 
 ERL_NIF_INIT(erlgeom, nif_funcs, &load, NULL, NULL, unload);
