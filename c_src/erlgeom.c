@@ -534,7 +534,7 @@ intersection(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom2)) {
+    if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom2)) {
         return 0;
     }
 
