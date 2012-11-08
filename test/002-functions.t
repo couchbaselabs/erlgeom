@@ -17,12 +17,30 @@ main(_) ->
     code:add_pathz("test"),
     code:add_pathz("ebin"),
 
-    etap:plan(3),
+    etap:plan(8),
+    test_get_centroid(),
+    test_get_centroid_geom(),
     test_disjoint(),
+    test_intersection(),
+    test_intersects(),
+    test_is_valid(),
     test_simplify(),
 
     etap:end_tests().
 
+test_get_centroid() ->
+    Pt = {'Point',[3,3]},
+    Pt1 = erlgeom:to_geom(Pt),
+    Centroid = erlgeom:get_centroid(Pt1),
+    etap:is(Centroid, Pt,
+        "Point get_centroid works").
+
+test_get_centroid_geom() ->
+    Pt = {'Point',[3,3]},
+    Pt1 = erlgeom:to_geom(Pt),
+    CentroidGeom = erlgeom:get_centroid_geom(Pt1),
+    etap:is(erlgeom:from_geom(CentroidGeom), Pt,
+        "Point get_centroid_geom works").
 
 test_disjoint() ->
     Pt = {'Point',[3.0, 3.0]},
@@ -30,36 +48,69 @@ test_disjoint() ->
     Pt1 = erlgeom:to_geom(Pt),
     Ls1 = erlgeom:to_geom(Ls),
     Disjoint = erlgeom:disjoint(Pt1, Ls1),
-    etap:is(Disjoint, false, "Geometries are not disjoint"),
+    etap:is(Disjoint, false,
+        "Geometries are not disjoint"),
 
     % Some geometries are based on the GeoJSON specification
     % http://geojson.org/geojson-spec.html (2010-08-17)
     Geoms = [
         {'Point', [100.0, 0.0]},
-        {'LineString', [[100.0, 0.0], [101.0, 1.0]]},
-        {'Polygon', [
-            [[100.0, 0.0], [101.0, 0.0], [100.0, 1.0], [100.0, 0.0]]
+        {'LineString', [
+            [100.0, 0.0],
+            [101.0, 1.0]
         ]},
         {'Polygon', [
-            [[100.0, 0.0], [101.0, 0.0], [100.0, 1.0], [100.0, 0.0]],
-            [[100.2, 0.2], [100.6, 0.2], [100.2, 0.6], [100.2, 0.2]]
+            [[100.0, 0.0], 
+             [101.0, 0.0],
+             [100.0, 1.0],
+             [100.0, 0.0]]
         ]},
-        {'MultiPoint', [[100.0, 0.0], [101.0, 1.0]]},
+        {'Polygon', [
+            [[100.0, 0.0],
+             [101.0, 0.0],
+             [100.0, 1.0],
+             [100.0, 0.0]],
+            [[100.2, 0.2],
+             [100.6, 0.2],
+             [100.2, 0.6],
+             [100.2, 0.2]]
+        ]},
+        {'MultiPoint', [
+            [100.0, 0.0],
+            [101.0, 1.0]
+        ]},
         {'MultiLineString', [
-            [[100.0, 0.0], [101.0, 1.0]],
-            [[102.0, 2.0], [103.0, 3.0]]
+            [[100.0, 0.0],
+             [101.0, 1.0]],
+            [[102.0, 2.0],
+             [103.0, 3.0]]
         ]},
         {'MultiPolygon', [
             [
-                [[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]
+                [[102.0, 2.0],
+                 [103.0, 2.0],
+                 [103.0, 3.0],
+                 [102.0, 3.0],
+                 [102.0, 2.0]]
             ],[
-                [[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
-                [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]
+                [[100.0, 0.0],
+                 [101.0, 0.0],
+                 [101.0, 1.0],
+                 [100.0, 1.0],
+                 [100.0, 0.0]],
+                [[100.2, 0.2],
+                 [100.8, 0.2],
+                 [100.8, 0.8],
+                 [100.2, 0.8],
+                 [100.2, 0.2]]
             ]
         ]},
         {'GeometryCollection', [
             {'Point', [100.0, 0.0]},
-            {'LineString', [[101.0, 0.0], [102.0, 1.0]]}
+            {'LineString', [
+                [101.0, 0.0],
+                [102.0, 1.0]
+            ]}
         ]}
     ],
 
@@ -90,7 +141,52 @@ test_disjoint() ->
     etap:is(Results, [true,true,true,true,true,true, false, false],
         "Two geometries are not disjoint").
 
+test_intersection() ->
+    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
+    Geom2 = erlgeom:to_geom({'LineString', [[2,2],[9,9]]}),
+    Intersection = {'LineString', [[2,2],[9,9]]},
+    Intersection1 = erlgeom:intersection(Geom1, Geom2),
+    etap:is(erlgeom:from_geom(Intersection1), Intersection,
+        "Linestrings intersection works").
+
+test_intersects() ->
+    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
+    Geom2 = erlgeom:to_geom({'LineString', [[2,2],[9,9]]}),
+    etap:is(erlgeom:intersects(Geom1, Geom2), true,
+        "Linestrings intersects works").
+
+test_is_valid() ->
+    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
+    etap:is(erlgeom:is_valid(Geom1), true,
+        "Linestrings is_valid works").
+
 test_simplify() ->
-    Polygon = {'Polygon', [[[-43.59375, -0.3515625], [-31.640625, 15.8203125], [-33.046875, 25.6640625], [-37.265625, 39.7265625], [-34.453125, 67.8515625], [6.328125, 58.7109375], [21.09375, 65.0390625], [35.15625, 63.6328125], [78.046875, 63.6328125], [75.234375, 48.1640625], [65.390625, 33.3984375], [43.59375, 36.2109375], [-6.328125, 36.2109375], [-0.703125, 31.9921875], [2.109375, 5.9765625], [3.515625, -16.5234375], [-17.578125, -19.3359375], [-24.609375, -5.9765625], [-40.078125, -11.6015625], [-40.078125, -11.6015625], [-43.59375, -0.3515625]]]},
-    {'Polygon', [NewCoords]} = erlgeom:topology_preserve_simplify(erlgeom:to_geom(Polygon), 30.0),
+    Polygon = {'Polygon', [[
+        [-43.59375, -0.3515625],
+        [-31.640625, 15.8203125],
+        [-33.046875, 25.6640625],
+        [-37.265625, 39.7265625],
+        [-34.453125, 67.8515625],
+        [6.328125, 58.7109375],
+        [21.09375, 65.0390625],
+        [35.15625, 63.6328125],
+        [78.046875, 63.6328125],
+        [75.234375, 48.1640625],
+        [65.390625, 33.3984375],
+        [43.59375, 36.2109375],
+        [-6.328125, 36.2109375],
+        [-0.703125, 31.9921875],
+        [2.109375, 5.9765625],
+        [3.515625, -16.5234375],
+        [-17.578125, -19.3359375],
+        [-24.609375, -5.9765625],
+        [-40.078125, -11.6015625],
+        [-40.078125, -11.6015625],
+        [-43.59375, -0.3515625]]]},
+    {'Polygon', 
+        [NewCoords]} = erlgeom:topology_preserve_simplify(
+            erlgeom:to_geom(Polygon),
+            30.0),
     etap:is(length(NewCoords), 6, "Geometry was simplified").
+
+
