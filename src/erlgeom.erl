@@ -24,8 +24,19 @@
     intersects/2,
     is_valid/1,
     topology_preserve_simplify/2,
-    to_geom/1
+    to_geom/1,
+    wkbreader_create/0,
+    wkbreader_read/2,
+    wkbreader_readhex/2,
+    wkbwriter_create/0,
+    wkbwriter_write/2,
+    wkbwriter_writehex/2,
+    wktreader_create/0,
+    wktreader_read/2,
+    wktwriter_create/0,
+    wktwriter_write/2
     ]).
+
 -ifdef(makecheck).
 -compile(export_all).
 -endif.
@@ -67,6 +78,37 @@ is_valid(_Geom1) ->
 
 topology_preserve_simplify(_Geom1, _Tolerance) ->
     "NIF library not loaded".
+
+wkbreader_create() ->
+    "NIF library not loaded".
+
+wkbreader_read(_WKBReader, _Wkb) ->
+    "NIF library not loaded".
+
+wkbreader_readhex(_WKBReader, _WkbHex) ->
+    "NIF library not loaded".
+
+wkbwriter_create() ->
+    "NIF library not loaded".
+
+wkbwriter_write(_WKBWriter, _Geom) ->
+    "NIF library not loaded".
+
+wkbwriter_writehex(_WKBWriter, _Geom) ->
+    "NIF library not loaded".
+
+wktreader_create() ->
+    "NIF library not loaded".
+
+wktreader_read(_WKTReader, _Wkt) ->
+    "NIF library not loaded".
+
+wktwriter_create() ->
+    "NIF library not loaded".
+
+wktwriter_write(_WKTWriter, _Geom) ->
+    "NIF library not loaded".
+
 
 % @doc Convert a GeoCouch geometry to a GEOS geometry, validate
 % the structure of the geometry.
