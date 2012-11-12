@@ -624,34 +624,12 @@ intersection(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /*
 Geom1 = erlgeom:to_geom({'LineString', [[4,4],[10,10]]}),
-erlgeom:get_centroid(Geom1).
-{'Point',[7.0,7.0]}
-*/
-static ERL_NIF_TERM
-get_centroid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    GEOSGeometry **geom;
-    GEOSGeometry *centroid_geom;
-    ERL_NIF_TERM eterm;
-
-    if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom)) {
-        return 0;
-    }
-
-    centroid_geom = GEOSGetCentroid(*geom);
-    eterm = geom_to_eterm(env, centroid_geom);
-    GEOSGeom_destroy(centroid_geom);
-    return eterm;
-}
-
-/*
-Geom1 = erlgeom:to_geom({'LineString', [[4,4],[10,10]]}),
 Geom2 = erlgeom:get_centroid_geom(Geom1),
 erlgeom:from_geom(Geom2).
 {'Point',[7.0,7.0]}
 */
 static ERL_NIF_TERM
-get_centroid_geom(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+get_centroid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
@@ -1057,7 +1035,6 @@ static ErlNifFunc nif_funcs[] =
     {"disjoint", 2, disjoint},
     {"from_geom", 1, from_geom},
     {"get_centroid", 1, get_centroid},
-    {"get_centroid_geom", 1, get_centroid_geom},
     {"intersection", 2, intersection},
     {"intersects", 2, intersects},
     {"is_valid", 1, is_valid},

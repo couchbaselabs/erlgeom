@@ -19,7 +19,6 @@
     disjoint/2,
     from_geom/1,
     get_centroid/1,
-    get_centroid_geom/1,
     intersection/2,
     intersects/2,
     is_valid/1,
@@ -62,9 +61,6 @@ disjoint(_Geom1, _Geom2) ->
     "NIF library not loaded".
 
 get_centroid(_Geom1) ->
-    "NIF library not loaded".
-
-get_centroid_geom(_Geom1) ->
     "NIF library not loaded".
 
 intersection(_Geom1, _Geom2) ->
