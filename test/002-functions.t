@@ -17,30 +17,24 @@ main(_) ->
     code:add_pathz("test"),
     code:add_pathz("ebin"),
 
-    etap:plan(8),
-    test_get_centroid(),
-    test_get_centroid_geom(),
+    etap:plan(14),
     test_disjoint(),
-    test_intersection(),
     test_intersects(),
-    test_is_valid(),
-    test_simplify(),
+    test_intersection(),
+    test_get_centroid(),
+    test_topology_preserve_simplify(),
+    test_is_valid__true(),
+    test_is_valid__false(),
+    test_wktreader_read(),
+    test_wkbreader_read(),
+    test_wkbreader_readhex(),
+    test_wktwriter_write(),
+    test_wkbwriter_write(),
+    test_wkbwriter_writehex(),
 
     etap:end_tests().
 
-test_get_centroid() ->
-    Pt = {'Point',[3,3]},
-    Pt1 = erlgeom:to_geom(Pt),
-    Centroid = erlgeom:get_centroid(Pt1),
-    etap:is(Centroid, Pt,
-        "Point get_centroid works").
-
-test_get_centroid_geom() ->
-    Pt = {'Point',[3,3]},
-    Pt1 = erlgeom:to_geom(Pt),
-    CentroidGeom = erlgeom:get_centroid_geom(Pt1),
-    etap:is(erlgeom:from_geom(CentroidGeom), Pt,
-        "Point get_centroid_geom works").
+% Binary predicates
 
 test_disjoint() ->
     Pt = {'Point',[3.0, 3.0]},
@@ -141,6 +135,14 @@ test_disjoint() ->
     etap:is(Results, [true,true,true,true,true,true, false, false],
         "Two geometries are not disjoint").
 
+test_intersects() ->
+    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
+    Geom2 = erlgeom:to_geom({'LineString', [[2,2],[9,9]]}),
+    etap:is(erlgeom:intersects(Geom1, Geom2), true,
+        "Linestrings intersects works").
+
+% Topology operations
+
 test_intersection() ->
     Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
     Geom2 = erlgeom:to_geom({'LineString', [[2,2],[9,9]]}),
@@ -149,18 +151,14 @@ test_intersection() ->
     etap:is(erlgeom:from_geom(Intersection1), Intersection,
         "Linestrings intersection works").
 
-test_intersects() ->
-    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
-    Geom2 = erlgeom:to_geom({'LineString', [[2,2],[9,9]]}),
-    etap:is(erlgeom:intersects(Geom1, Geom2), true,
-        "Linestrings intersects works").
+test_get_centroid() ->
+    Pt = {'Point',[3,3]},
+    Pt1 = erlgeom:to_geom(Pt),
+    CentroidGeom = erlgeom:get_centroid(Pt1),
+    etap:is(erlgeom:from_geom(CentroidGeom), Pt,
+        "Point get_centroid_geom works").
 
-test_is_valid() ->
-    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
-    etap:is(erlgeom:is_valid(Geom1), true,
-        "Linestrings is_valid works").
-
-test_simplify() ->
+test_topology_preserve_simplify() ->
     Polygon = {'Polygon', [[
         [-43.59375, -0.3515625],
         [-31.640625, 15.8203125],
@@ -188,5 +186,84 @@ test_simplify() ->
             erlgeom:to_geom(Polygon),
             30.0),
     etap:is(length(NewCoords), 6, "Geometry was simplified").
+
+% Validity checking
+
+test_is_valid__true() ->
+    Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
+    etap:is(erlgeom:is_valid(Geom1), true,
+        "Linestrings is_valid equals true works").
+
+test_is_valid__false() ->
+    WktReader = erlgeom:wktreader_create(),
+    Geom1 = erlgeom:wktreader_read(WktReader, 
+        "POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))"),
+    etap:is(erlgeom:is_valid(Geom1), false,
+        "Linestrings is_valid equals false works").
+
+
+% Reader and Writer APIs
+
+test_wktreader_read() ->
+    Pt = {'Point', [10,10]},
+    WktReader = erlgeom:wktreader_create(),
+    Geom1 = erlgeom:wktreader_read(WktReader, "POINT(10.0 10.0)"),
+    Pt1 = erlgeom:from_geom(Geom1), 
+    etap:is(Pt1, Pt, "Point wktreader_read works").
+
+test_wkbreader_read() ->
+    Pt = {'Point',[10.0,10.0]},
+    Geom1 = erlgeom:to_geom(Pt),
+    WkbWriter = erlgeom:wkbwriter_create(),
+    Bin = erlgeom:wkbwriter_write(WkbWriter, Geom1),
+    WkbReader = erlgeom:wkbreader_create(),
+    Geom2 = erlgeom:wkbreader_read(WkbReader, Bin),
+    Pt2 = erlgeom:from_geom(Geom2),
+    etap:is(Pt2, Pt, "Point wkbreader_read works").
+
+test_wkbreader_readhex() ->
+    Pt = {'Point',[10.0,10.0]},
+    WkbReader = erlgeom:wkbreader_create(),
+    Geom1 = erlgeom:wkbreader_readhex(WkbReader,
+        "010100000000000000000024400000000000002440"),
+    Pt1 = erlgeom:from_geom(Geom1),
+    etap:is(Pt1, Pt, "Point wkbreader_readhex works").
+
+test_wktwriter_write() ->
+    Pt = "POINT (10.0000000000000000 10.0000000000000000)",
+    WktReader = erlgeom:wktreader_create(),
+    Geom1 = erlgeom:wktreader_read(WktReader, "POINT(10 10)"),
+    WktWriter = erlgeom:wktwriter_create(),
+    Pt1 = erlgeom:wktwriter_write(WktWriter, Geom1),
+    etap:is(Pt1, Pt, "Point wktwriter_write works").
+
+test_wkbwriter_write() ->
+    Pt = "POINT(10.0 10.0)",
+    WktReader = erlgeom:wktreader_create(),
+    Geom1 = erlgeom:wktreader_read(WktReader, Pt),
+    Pt1 = erlgeom:from_geom(Geom1),
+    WkbWriter = erlgeom:wkbwriter_create(),
+    Bin = erlgeom:wkbwriter_write(WkbWriter, Geom1),
+    WkbReader = erlgeom:wkbreader_create(),
+    Geom2 = erlgeom:wkbreader_read(WkbReader, Bin),
+    Pt2 = erlgeom:from_geom(Geom2),
+    etap:is(Pt2, Pt1, "Point wkbwriter_write works").
+
+test_wkbwriter_writehex() ->
+    Pt = "010100000000000000000024400000000000002440",
+    WktReader = erlgeom:wktreader_create(),
+    Geom = erlgeom:wktreader_read(WktReader, "POINT(10.0 10.0)"),
+    WkbWriter = erlgeom:wkbwriter_create(),
+    Hex = erlgeom:wkbwriter_writehex(WkbWriter, Geom),
+    etap:is(Hex, Pt, "Point wktwriter_writehex works").
+
+
+
+
+
+
+
+
+
 
 
