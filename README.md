@@ -49,12 +49,14 @@ more examples.
     2> erlgeom:from_geom(Geom3).
     {'LineString', [[3,3],[7,7]]}
 
-    3> Geom1 = erlgeom:to_geom({'LineString', [[4,4],[10,10]]}),
-    3> erlgeom:get_centroid(Geom1).
-    {'Point',[7.0,7.0]}
+    3> WktReader = erlgeom:wktreader_create(),
+    3> Geom2 = erlgeom:wktreader_read(WktReader, 
+    3>    "POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))"),
+    3> erlgeom:is_valid(Geom2).
+    false
 
     4> Geom1 = erlgeom:to_geom({'LineString', [[4,4],[10,10]]}),
-    4> Geom2 = erlgeom:get_centroid_geom(Geom1),
+    4> Geom2 = erlgeom:get_centroid(Geom1),
     4> erlgeom:from_geom(Geom2).
     {'Point',[7.0,7.0]}
 
