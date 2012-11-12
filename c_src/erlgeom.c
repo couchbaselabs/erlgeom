@@ -709,6 +709,9 @@ topology_preserve_simplify(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 Geom1 = erlgeom:to_geom({'LineString', [[4,4], [4.5, 4.5], [10,10]]}),
 erlgeom:is_valid(Geom1).
 true
+Geom2 = erlgeom:wktreader_read(WktReader,"POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))"),
+erlgeom:is_valid(Geom2).
+false
 */
 static ERL_NIF_TERM
 is_valid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
