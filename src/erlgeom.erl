@@ -17,10 +17,6 @@
 -export([disjoint/2, from_geom/1, to_geom/1,
     topology_preserve_simplify/2, to_geom_validate/1]).
 
--ifdef(makecheck).
--compile(export_all).
--endif.
-
 -on_load(init/0).
 
 
