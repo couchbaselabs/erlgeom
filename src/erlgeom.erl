@@ -41,9 +41,6 @@
     wktwriter_write/2
     ]).
 
--ifdef(makecheck).
--compile(export_all).
--endif.
 
 -on_load(init/0).
 
