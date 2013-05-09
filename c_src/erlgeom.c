@@ -31,6 +31,7 @@ static ErlNifResourceType* GEOSWKTREADER_RESOURCE;
 static ErlNifResourceType* GEOSWKTWRITER_RESOURCE;
 static ErlNifResourceType* GEOSWKBREADER_RESOURCE;
 static ErlNifResourceType* GEOSWKBWRITER_RESOURCE;
+static ErlNifResourceType* GEOSSTRTREE_RESOURCE;
 
 
 /* Currently support for 2 dimensions only */
@@ -423,6 +424,40 @@ geom_to_eterm(ErlNifEnv *env, const GEOSGeometry *geom)
     return -1;
 }
 
+// SRTRTree
+//typedef struct {
+//    int size;
+//    GEOSGeometry* geom[100];
+//} GeosSTRtree_cb_t;
+typedef struct {
+    int size;
+    GEOSGeometry** geom[100];
+} GeosSTRtree_cb_t;
+//void
+//geosstrtree_cb(void *item, void *acc) {
+//    GeosSTRtree_cb_t *result_ptr  = (GeosSTRtree_cb_t *) acc;
+//    if (result_ptr->size < 100) {
+//        GEOSGeometry *geom = (GEOSGeometry *) item;
+//        result_ptr->geom[result_ptr->size] = geom;
+//        result_ptr->size += 1;
+//    } else {
+//	    fprintf(stderr, "Geometries returned more than 100, skipping: %d.\n",
+//            result_ptr->size);
+//    }
+//} 
+void
+geosstrtree_cb(void *item, void *acc) {
+    GeosSTRtree_cb_t *result_ptr  = (GeosSTRtree_cb_t *) acc;
+    if (result_ptr->size < 100) {
+        GEOSGeometry **geom = (GEOSGeometry **) item;
+        result_ptr->geom[result_ptr->size] = geom;
+        result_ptr->size += 1;
+    } else {
+	    fprintf(stderr, "Geometries returned more than 100, skipping: %d.\n",
+            result_ptr->size);
+    }
+}
+
 
 /* From http://trac.gispython.org/lab/browser/PCL/trunk/PCL-Core/cartography/
     geometry/_geommodule.c */
@@ -483,6 +518,14 @@ wkbwriter_destroy(ErlNifEnv *env, void *obj)
     GEOSWKBWriter_destroy(*wkb_writer);
 }
 
+static void
+geosstrtree_destroy(ErlNifEnv *env, void *obj)
+{
+    GEOSSTRtree **tree = (GEOSSTRtree**)obj;
+    GEOSSTRtree_destroy(*tree);
+}
+
+
 /* From https://github.com/iamaleksey/iconverl/blob/master/c_src/iconverl.c */
 static int
 load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
@@ -507,6 +550,10 @@ load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
 
     GEOSWKBWRITER_RESOURCE = enif_open_resource_type(
         env, NULL, "geoswkbwriter_resource", &wkbwriter_destroy,
+        ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
+
+    GEOSSTRTREE_RESOURCE = enif_open_resource_type(
+        env, NULL, "geosstrtree_resource", &geosstrtree_destroy,
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     return 0;
@@ -995,7 +1042,176 @@ wkbwriter_writehex(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return eterm;
 }
 
+/************************************************************************
+ *
+ *  STRtree functions
+ *
+ ***********************************************************************/
 
+/*
+extern GEOSSTRtree GEOS_DLL *GEOSSTRtree_create(size_t nodeCapacity);
+
+GeosSTRtree = erlgeom:geosstrtree_create().
+<<>>
+*/
+static ERL_NIF_TERM
+geosstrtree_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    ERL_NIF_TERM eterm;
+    GEOSSTRtree **tree = \
+        enif_alloc_resource(GEOSSTRTREE_RESOURCE, sizeof(GEOSSTRtree*));
+    size_t nodeCapacity = 10;
+    *tree = GEOSSTRtree_create(nodeCapacity);
+    eterm = enif_make_resource(env, tree);
+    enif_release_resource(tree);
+    return eterm;
+}
+
+/*
+extern void GEOS_DLL GEOSSTRtree_insert(GEOSSTRtree *tree,
+                                        const GEOSGeometry *g,
+                                        void *item);
+
+GeosSTRtree = erlgeom:geosstrtree_create(),
+Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom),
+*/
+static ERL_NIF_TERM
+geosstrtree_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSSTRtree **tree;
+    GEOSGeometry **geom;
+
+    if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
+        return 0;
+    }
+
+    if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom)) {
+        return 0;
+    }
+
+    //GEOSSTRtree_insert(*tree, GEOSEnvelope(*geom), *geom);
+    GEOSSTRtree_insert(*tree, GEOSEnvelope(*geom), geom);
+
+    return enif_make_atom(env, "ok");
+}
+
+/*
+extern void GEOS_DLL GEOSSTRtree_query(GEOSSTRtree *tree,
+                                       const GEOSGeometry *g,
+                                       GEOSQueryCallback callback,
+                                       void *userdata);
+
+GeosSTRtree = erlgeom:geosstrtree_create(),
+Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom),
+erlgeom:geosstrtree_query(GeosSTRtree, Geom).
+{Geom1, Geom2, Geom3, ..., GeomN}
+*/
+static ERL_NIF_TERM
+geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSSTRtree **tree;
+    GEOSGeometry **geom;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
+        return 0;
+    }
+
+    if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom)) {
+        return 0;
+    }
+   
+    GeosSTRtree_cb_t result = { .size = 0 };
+    GEOSSTRtree_query(*tree, *geom, geosstrtree_cb, &result);
+
+    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*result.size);
+    int index = 0;
+    for (; index<result.size; index++) {
+        //GEOSGeometry **geom = \
+        //    enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+        //*geom = result.geom[index];
+        //arr[index] = enif_make_resource(env, geom);
+        arr[index] = enif_make_resource(env, result.geom[index]);
+
+        //enif_release_resource(geom);
+    }
+
+    eterm = enif_make_tuple_from_array(env, arr, index);
+
+    free(arr);
+    return eterm;
+}
+
+
+
+/* extern void GEOS_DLL GEOSSTRtree_iterate(GEOSSTRtree *tree,
+                                       GEOSQueryCallback callback,
+                                       void *userdata);
+
+*/
+static ERL_NIF_TERM
+geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSSTRtree **tree;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
+        return 0;
+    }
+
+    GeosSTRtree_cb_t result = { .size = 0 };
+    GEOSSTRtree_iterate(*tree, geosstrtree_cb, &result);
+
+    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*result.size);
+    int index = 0;
+    for (; index<result.size; index++) {
+        //GEOSGeometry **geom = \
+        //    enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+        //*geom = result.geom[index];
+        //arr[index] = enif_make_resource(env, geom);
+        arr[index] = enif_make_resource(env, result.geom[index]);
+
+        //enif_release_resource(geom);
+    }
+
+    eterm = enif_make_tuple_from_array(env, arr, index);
+
+    free(arr);
+    return eterm;
+}
+
+/*
+extern char GEOS_DLL GEOSSTRtree_remove(GEOSSTRtree *tree,
+                                        const GEOSGeometry *g,
+                                        void *item);
+
+GeosSTRtree = erlgeom:geosstrtree_create(),
+Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom),
+erlgeom:geosstrtree_remove(GeosSTRtree, Geom).
+{ok, 1}.
+*/
+static ERL_NIF_TERM
+geosstrtree_remove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    GEOSSTRtree **tree;
+    GEOSGeometry **geom;
+
+    if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
+        return 0;
+    }
+
+    if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom)) {
+        return 0;
+    }
+
+    //char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), *geom);
+    char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), geom);
+	printf("Rtree remove: %d.\n", remove); 
+
+    return enif_make_tuple2(env,
+        enif_make_atom(env, "ok"),
+        enif_make_int(env, (int)remove));
+}
 
 
 /************************************************************************
@@ -1034,6 +1250,11 @@ static ErlNifFunc nif_funcs[] =
 {
     {"disjoint", 2, disjoint},
     {"from_geom", 1, from_geom},
+    {"geosstrtree_create", 0, geosstrtree_create},
+    {"geosstrtree_insert", 2, geosstrtree_insert},
+    {"geosstrtree_iterate", 1, geosstrtree_iterate},
+    {"geosstrtree_query", 2, geosstrtree_query},
+    {"geosstrtree_remove", 2, geosstrtree_remove},
     {"get_centroid", 1, get_centroid},
     {"intersection", 2, intersection},
     {"intersects", 2, intersects},

@@ -18,6 +18,11 @@
     to_geom_validate/1,
     disjoint/2,
     from_geom/1,
+    geosstrtree_create/0,
+    geosstrtree_insert/2,
+    geosstrtree_iterate/1,
+    geosstrtree_query/2,
+    geosstrtree_remove/2,
     get_centroid/1,
     intersection/2,
     intersects/2,
@@ -58,6 +63,21 @@ init() ->
     (catch erlang:load_nif(SoName, 0)).
 
 disjoint(_Geom1, _Geom2) ->
+    "NIF library not loaded".
+
+geosstrtree_create() ->
+    "NIF library not loaded".
+
+geosstrtree_insert(_RTree, _Geom) ->
+    "NIF library not loaded".
+
+geosstrtree_iterate(_RTree) ->
+    "NIF library not loaded".
+
+geosstrtree_query(_Rtree, _Geom) ->
+    "NIF library not loaded".
+
+geosstrtree_remove(_RTree, _Geom) ->
     "NIF library not loaded".
 
 get_centroid(_Geom1) ->
