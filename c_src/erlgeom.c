@@ -424,27 +424,11 @@ geom_to_eterm(ErlNifEnv *env, const GEOSGeometry *geom)
     return -1;
 }
 
-// SRTRTree
-//typedef struct {
-//    int size;
-//    GEOSGeometry* geom[100];
-//} GeosSTRtree_cb_t;
 typedef struct {
     int size;
     GEOSGeometry** geom[100];
 } GeosSTRtree_cb_t;
-//void
-//geosstrtree_cb(void *item, void *acc) {
-//    GeosSTRtree_cb_t *result_ptr  = (GeosSTRtree_cb_t *) acc;
-//    if (result_ptr->size < 100) {
-//        GEOSGeometry *geom = (GEOSGeometry *) item;
-//        result_ptr->geom[result_ptr->size] = geom;
-//        result_ptr->size += 1;
-//    } else {
-//	    fprintf(stderr, "Geometries returned more than 100, skipping: %d.\n",
-//            result_ptr->size);
-//    }
-//} 
+
 void
 geosstrtree_cb(void *item, void *acc) {
     GeosSTRtree_cb_t *result_ptr  = (GeosSTRtree_cb_t *) acc;
@@ -1127,13 +1111,7 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*result.size);
     int index = 0;
     for (; index<result.size; index++) {
-        //GEOSGeometry **geom = \
-        //    enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
-        //*geom = result.geom[index];
-        //arr[index] = enif_make_resource(env, geom);
         arr[index] = enif_make_resource(env, result.geom[index]);
-
-        //enif_release_resource(geom);
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
@@ -1165,13 +1143,7 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*result.size);
     int index = 0;
     for (; index<result.size; index++) {
-        //GEOSGeometry **geom = \
-        //    enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
-        //*geom = result.geom[index];
-        //arr[index] = enif_make_resource(env, geom);
         arr[index] = enif_make_resource(env, result.geom[index]);
-
-        //enif_release_resource(geom);
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
