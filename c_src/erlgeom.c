@@ -118,14 +118,14 @@ eterm_to_geom_polygon(ErlNifEnv *env, const ERL_NIF_TERM *eterm)
     outer_geom = GEOSGeom_createLinearRing(outer_seq);
 
     // if there are holes
-    geoms = malloc(sizeof(GEOSGeometry*)*rings_num-1);
+    geoms = enif_alloc(sizeof(GEOSGeometry*)*rings_num-1);
     for (i=0; enif_get_list_cell(env, inner_eterm, &inner_eterm, &tail); i++) {
         inner_seq = eterm_to_geom_linestring_coords(env, &inner_eterm);
         geoms[i] = GEOSGeom_createLinearRing(inner_seq);
         inner_eterm = tail;
     }
     geom = GEOSGeom_createPolygon(outer_geom, geoms, rings_num-1);
-    free(geoms);
+    enif_free(geoms);
     return geom;
 }
 
@@ -139,13 +139,13 @@ eterm_to_geom_multi(ErlNifEnv *env, ERL_NIF_TERM eterm, int type,
     ERL_NIF_TERM tail;
 
     enif_get_list_length(env, eterm, &geoms_num);
-    geoms = malloc(sizeof(GEOSGeometry*)*geoms_num);
+    geoms = enif_alloc(sizeof(GEOSGeometry*)*geoms_num);
     for (i=0; enif_get_list_cell(env, eterm , &eterm, &tail); i++) {
         geoms[i] = (*eterm_to_geom)(env, &eterm);
         eterm = tail;
     }
     geom = GEOSGeom_createCollection(type, geoms, geoms_num);
-    free(geoms);
+    enif_free(geoms);
     return geom;
 }
 
@@ -263,7 +263,7 @@ GEOSCoordSequence_to_eterm_list(ErlNifEnv *env,
     ERL_NIF_TERM *coords_list;
     ERL_NIF_TERM coords, coords_list_eterm;
 
-    coords_list = malloc(sizeof(ERL_NIF_TERM)*len);
+    coords_list = enif_alloc(sizeof(ERL_NIF_TERM)*len);
     for(i=0; i<len; i++) {
         GEOSCoordSeq_getX(coords_seq, i, &coordx);
         GEOSCoordSeq_getY(coords_seq, i, &coordy);
@@ -272,7 +272,7 @@ GEOSCoordSequence_to_eterm_list(ErlNifEnv *env,
         coords_list[i] = coords;
     }
     coords_list_eterm = enif_make_list_from_array(env, coords_list, len);
-    free(coords_list);
+    enif_free(coords_list);
     return coords_list_eterm;
 }
 
@@ -310,7 +310,7 @@ geom_to_eterm_polygon_coords(ErlNifEnv *env, const GEOSGeometry *geom)
 
     inner_num = GEOSGetNumInteriorRings(geom);
     // all rings, outer + inner
-    rings = malloc(sizeof(ERL_NIF_TERM)*inner_num+1);
+    rings = enif_alloc(sizeof(ERL_NIF_TERM)*inner_num+1);
 
     outer = GEOSGetExteriorRing(geom);
     coords_seq = GEOSGeom_getCoordSeq(outer);
@@ -324,7 +324,7 @@ geom_to_eterm_polygon_coords(ErlNifEnv *env, const GEOSGeometry *geom)
             coords_seq, GEOSGetNumCoordinates(inner));
     }
     coords = enif_make_list_from_array(env, rings, inner_num+1);
-    free(rings);
+    enif_free(rings);
     return coords;
 }
 
@@ -339,13 +339,13 @@ geom_to_eterm_multi_coords(ErlNifEnv *env, const GEOSGeometry *multi_geom,
     ERL_NIF_TERM *coords_multi;
 
     geom_num = GEOSGetNumGeometries(multi_geom);
-    coords_multi = malloc(sizeof(ERL_NIF_TERM)*geom_num);
+    coords_multi = enif_alloc(sizeof(ERL_NIF_TERM)*geom_num);
     for (i=0; i<geom_num; i++) {
         geom = GEOSGetGeometryN(multi_geom, i);
         coords_multi[i] = (*geom_to_eterm_coords)(env, geom);
     }
     coords = enif_make_list_from_array(env, coords_multi, geom_num);
-    free(coords_multi);
+    enif_free(coords_multi);
     return coords;
 }
 
@@ -552,7 +552,7 @@ unload(ErlNifEnv* env, void* priv_data)
 
 /************************************************************************
  *
- *  Binary predicates - return error on exception, true, false
+ *  Binary predicates - return 2 on exception, 1 on true, 0 on false
  *
  ***********************************************************************/
 
@@ -575,12 +575,14 @@ disjoint(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom2)) {
         return 0;
     }
-
-    if (GEOSDisjoint(*geom1, *geom2)) {
+    
+    int result;
+    if ((result = GEOSDisjoint(*geom1, *geom2)) == 1) {
         return enif_make_atom(env, "true");
-    }
-    else {
+    } else if (result == 0) {
         return enif_make_atom(env, "false");
+    } else {
+        return enif_make_atom(env, "error");
     }
 }
 
@@ -603,14 +605,12 @@ intersects(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    int intersects;
-    if ((intersects = GEOSIntersects(*geom1, *geom2)) == 1 ) {
+    int result;
+    if ((result = GEOSIntersects(*geom1, *geom2)) == 1 ) {
         return enif_make_atom(env, "true");
-    }
-    else if (intersects == 0) {
+    } else if (result == 0) {
         return enif_make_atom(env, "false");
-    }
-    else {
+    } else {
         return enif_make_atom(env, "error");
     }
 }
@@ -644,12 +644,18 @@ intersection(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    GEOSGeometry **intersection_geom = \
+    GEOSGeometry **result_geom = \
         enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+    *result_geom = GEOSIntersection(*geom1, *geom2);
 
-    *intersection_geom = GEOSIntersection(*geom1, *geom2);
-    eterm = enif_make_resource(env, intersection_geom);
-    enif_release_resource(intersection_geom);
+    if (*result_geom == NULL) {
+        eterm = enif_make_atom(env, "undefined");
+    } else {
+        eterm = enif_make_tuple2(env,
+            enif_make_atom(env, "ok"),
+            enif_make_resource(env, result_geom));
+        enif_release_resource(result_geom);
+    }
     return eterm;
 }
 
@@ -669,12 +675,18 @@ get_centroid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    GEOSGeometry **centroid_geom = \
+    GEOSGeometry **result_geom = \
         enif_alloc_resource(GEOSGEOM_RESOURCE, sizeof(GEOSGeometry*));
+    *result_geom = GEOSGetCentroid(*geom);
 
-    *centroid_geom = GEOSGetCentroid(*geom);
-    eterm = enif_make_resource(env, centroid_geom);
-    enif_release_resource(centroid_geom);
+    if (*result_geom == NULL) {
+        eterm = enif_make_atom(env, "undefined");
+    } else {
+        eterm = enif_make_tuple2(env,
+            enif_make_atom(env, "ok"),
+            enif_make_resource(env, result_geom));
+        enif_release_resource(result_geom);
+    }
     return eterm;
 }
 
@@ -787,7 +799,7 @@ wktreader_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_get_list_length(env, argv[1], &len)){
         return 0;
     }
-    char *wkt = malloc(sizeof(char)*(len+1));
+    char *wkt = enif_alloc(sizeof(char)*(len+1));
 
     if(!enif_get_string(env, argv[1], wkt, len+1, ERL_NIF_LATIN1)) {
         return 0;
@@ -799,7 +811,7 @@ wktreader_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     *geom = GEOSWKTReader_read(*wkt_reader, wkt);
     eterm = enif_make_resource(env, geom);
     enif_release_resource(geom);
-    free(wkt);
+    enif_free(wkt);
     return eterm;
 }
 
@@ -811,10 +823,12 @@ static ERL_NIF_TERM
 wkbreader_create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ERL_NIF_TERM eterm;
+
     GEOSWKBReader **wkb_reader = \
         enif_alloc_resource(GEOSWKBREADER_RESOURCE, sizeof(GEOSWKBReader*));
-
     *wkb_reader = GEOSWKBReader_create();
+
+    
     eterm = enif_make_resource(env, wkb_reader);
     enif_release_resource(wkb_reader);
     return eterm;
@@ -878,7 +892,7 @@ wkbreader_readhex(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_get_list_length(env, argv[1], &len)){
         return 0;
     }
-    char *wkb_hex = malloc(sizeof(char)*(len+1));
+    char *wkb_hex = enif_alloc(sizeof(char)*(len+1));
 
     // TODO: Specific message in cases < 0, == 0 
     if(enif_get_string(env, argv[1], wkb_hex, len+1, ERL_NIF_LATIN1) <= 0) {
@@ -892,7 +906,7 @@ wkbreader_readhex(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     *geom = GEOSWKBReader_readHEX(*wkb_reader, (unsigned char *)wkb_hex, size);
     eterm = enif_make_resource(env, geom);
     enif_release_resource(geom);
-    free(wkb_hex);
+    enif_free(wkb_hex);
     return eterm;
 }
 
@@ -1108,7 +1122,7 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GeosSTRtree_cb_t result = { .size = 0 };
     GEOSSTRtree_query(*tree, *geom, geosstrtree_cb, &result);
 
-    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*result.size);
+    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*result.size);
     int index = 0;
     for (; index<result.size; index++) {
         arr[index] = enif_make_resource(env, result.geom[index]);
@@ -1116,7 +1130,7 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_tuple_from_array(env, arr, index);
 
-    free(arr);
+    enif_free(arr);
     return eterm;
 }
 
@@ -1140,7 +1154,8 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GeosSTRtree_cb_t result = { .size = 0 };
     GEOSSTRtree_iterate(*tree, geosstrtree_cb, &result);
 
-    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*result.size);
+    ERL_NIF_TERM *arr = \
+        (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*result.size);
     int index = 0;
     for (; index<result.size; index++) {
         arr[index] = enif_make_resource(env, result.geom[index]);
@@ -1148,7 +1163,7 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_tuple_from_array(env, arr, index);
 
-    free(arr);
+    enif_free(arr);
     return eterm;
 }
 
