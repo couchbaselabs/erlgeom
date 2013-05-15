@@ -152,7 +152,7 @@ test_intersection() ->
     Geom1 = erlgeom:to_geom({'LineString', [[1,1],[10,10]]}),
     Geom2 = erlgeom:to_geom({'LineString', [[2,2],[9,9]]}),
     Intersection = {'LineString', [[2,2],[9,9]]},
-    Intersection1 = erlgeom:intersection(Geom1, Geom2),
+    {ok, Intersection1} = erlgeom:intersection(Geom1, Geom2),
     etap:is(erlgeom:from_geom(Intersection1), Intersection,
         "Linestrings intersection works").
 
@@ -202,7 +202,7 @@ test_geosstrtree_remove() ->
 test_get_centroid() ->
     Pt = {'Point',[3,3]},
     Pt1 = erlgeom:to_geom(Pt),
-    CentroidGeom = erlgeom:get_centroid(Pt1),
+    {ok, CentroidGeom} = erlgeom:get_centroid(Pt1),
     etap:is(erlgeom:from_geom(CentroidGeom), Pt,
         "Point get_centroid_geom works").
 
