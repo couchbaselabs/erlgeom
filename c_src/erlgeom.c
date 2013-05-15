@@ -568,6 +568,10 @@ disjoint(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSGeometry **geom1;
     GEOSGeometry **geom2;
 
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
         return enif_make_badarg(env);
     }
@@ -597,6 +601,10 @@ intersects(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     GEOSGeometry **geom1;
     GEOSGeometry **geom2;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
         return enif_make_badarg(env);
@@ -636,6 +644,10 @@ intersection(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSGeometry **geom2;
     ERL_NIF_TERM eterm;
 
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
         return enif_make_badarg(env);
     }
@@ -671,6 +683,10 @@ get_centroid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env);
     }
@@ -703,6 +719,10 @@ topology_preserve_simplify(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     double dbl_tol;
     int int_tol;
     ERL_NIF_TERM eterm;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env);
@@ -738,6 +758,10 @@ static ERL_NIF_TERM
 is_valid(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     GEOSGeometry **geom1;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom1)) {
         return enif_make_badarg(env);
@@ -789,6 +813,10 @@ wktreader_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     GEOSWKTReader **wkt_reader;
     ERL_NIF_TERM eterm;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSWKTREADER_RESOURCE,
         (void**)&wkt_reader)) {
@@ -851,6 +879,10 @@ wkbreader_read(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary bin;
     ERL_NIF_TERM eterm;
 
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSWKBREADER_RESOURCE,
         (void**)&wkb_reader)) {
         return enif_make_badarg(env);
@@ -882,6 +914,10 @@ wkbreader_readhex(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     GEOSWKBReader **wkb_reader;
     ERL_NIF_TERM eterm;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSWKBREADER_RESOURCE,
         (void**)&wkb_reader)) {
@@ -941,6 +977,10 @@ wktwriter_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
 
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSWKTWRITER_RESOURCE,
         (void**)&wkt_writer)) {
         return enif_make_badarg(env);
@@ -988,6 +1028,10 @@ wkbwriter_write(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
 
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSWKBWRITER_RESOURCE,
         (void**)&wkb_writer)) {
         return enif_make_badarg(env);
@@ -1022,6 +1066,10 @@ wkbwriter_writehex(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSWKBWriter **wkb_writer;
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSWKBWRITER_RESOURCE,
         (void**)&wkb_writer)) {
@@ -1079,6 +1127,10 @@ geosstrtree_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSSTRtree **tree;
     GEOSGeometry **geom;
 
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
         return enif_make_badarg(env);
     }
@@ -1110,6 +1162,10 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSSTRtree **tree;
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
         return enif_make_badarg(env);
@@ -1147,6 +1203,10 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSSTRtree **tree;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
         return enif_make_badarg(env);
     }
@@ -1182,6 +1242,10 @@ geosstrtree_remove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     GEOSSTRtree **tree;
     GEOSGeometry **geom;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
         return enif_make_badarg(env);
@@ -1223,6 +1287,10 @@ static
 ERL_NIF_TERM from_geom(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     GEOSGeometry **geom;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], GEOSGEOM_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env);
