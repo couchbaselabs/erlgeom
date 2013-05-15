@@ -60,67 +60,67 @@ init() ->
     (catch erlang:load_nif(SoName, 0)).
 
 disjoint(_Geom1, _Geom2) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 geosstrtree_create() ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 geosstrtree_insert(_RTree, _Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 geosstrtree_iterate(_RTree) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 geosstrtree_query(_Rtree, _Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 geosstrtree_remove(_RTree, _Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 get_centroid(_Geom1) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 intersection(_Geom1, _Geom2) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 intersects(_Geom1, _Geom2) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 is_valid(_Geom1) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 topology_preserve_simplify(_Geom1, _Tolerance) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wkbreader_create() ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wkbreader_read(_WKBReader, _Wkb) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wkbreader_readhex(_WKBReader, _WkbHex) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wkbwriter_create() ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wkbwriter_write(_WKBWriter, _Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wkbwriter_writehex(_WKBWriter, _Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wktreader_create() ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wktreader_read(_WKTReader, _Wkt) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wktwriter_create() ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 wktwriter_write(_WKTWriter, _Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 
 % @doc Convert a GeoCouch geometry to a GEOS geometry, validate
@@ -224,8 +224,8 @@ all2(Fun, [H|T]) ->
 
 % @doc Convert a GeoCouch geometry to a GEOS geometry
 to_geom(_Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 % @doc Convert a GEOS geometry to a GeoCouch geometry
 from_geom(_Geom) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
