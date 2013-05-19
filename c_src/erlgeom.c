@@ -425,21 +425,23 @@ geom_to_eterm(ErlNifEnv *env, const GEOSGeometry *geom)
 }
 
 typedef struct {
+    int count;
     int size;
-    GEOSGeometry** geom[100];
-} GeosSTRtree_cb_t;
+    GEOSGeometry** *geoms;
+} GeosSTRtree_acc_t;
 
 void
 geosstrtree_cb(void *item, void *acc) {
-    GeosSTRtree_cb_t *result_ptr  = (GeosSTRtree_cb_t *) acc;
-    if (result_ptr->size < 100) {
-        GEOSGeometry **geom = (GEOSGeometry **) item;
-        result_ptr->geom[result_ptr->size] = geom;
-        result_ptr->size += 1;
-    } else {
-	    fprintf(stderr, "Geometries returned more than 100, skipping: %d.\n",
-            result_ptr->size);
+    GEOSGeometry **geom = (GEOSGeometry **) item;
+    GeosSTRtree_acc_t *acc_ptr  = (GeosSTRtree_acc_t *) acc;
+    //fprintf(stderr, "Count:%d Size:%d\n", acc_ptr->count, acc_ptr->size);
+    ++(acc_ptr->count);
+    if (acc_ptr->count == acc_ptr->size) {
+        acc_ptr->size *=2;
+        acc_ptr->geoms = enif_realloc(acc_ptr->geoms, acc_ptr->size);
     }
+    //fprintf(stderr, "Points: %d\n", GEOSGeomGetNumPoints(*geom));
+    acc_ptr->geoms[acc_ptr->count-1] = geom;
 }
 
 
@@ -1174,19 +1176,25 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env);
     }
-   
-    GeosSTRtree_cb_t result = { .size = 0 };
-    GEOSSTRtree_query(*tree, *geom, geosstrtree_cb, &result);
+    GEOSGeometry** *geoms = \
+        (GEOSGeometry***) enif_alloc(sizeof(GEOSGeometry**)*100);
+    GeosSTRtree_acc_t acc = {.count=0, .size=100, .geoms=geoms};
+    GEOSSTRtree_query(*tree, *geom, geosstrtree_cb, &acc);
 
-    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*result.size);
+    ERL_NIF_TERM *arr = \
+        (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*acc.count);
+
     int index = 0;
-    for (; index<result.size; index++) {
-        arr[index] = enif_make_resource(env, result.geom[index]);
+    for (; index<acc.count; index++) {
+        //fprintf(stderr, "Points: %d\n",
+        //    GEOSGeomGetNumPoints(*(acc.geoms[index])));
+        arr[index] = enif_make_resource(env, acc.geoms[index]);
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
 
     enif_free(arr);
+    enif_free(geoms);
     return eterm;
 }
 
@@ -1211,19 +1219,23 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    GeosSTRtree_cb_t result = { .size = 0 };
-    GEOSSTRtree_iterate(*tree, geosstrtree_cb, &result);
+    GEOSGeometry** *geoms = \
+        (GEOSGeometry***) enif_alloc(sizeof(GEOSGeometry**)*100);
+    GeosSTRtree_acc_t acc = {.count=0, .size=100, .geoms=geoms};
+    GEOSSTRtree_iterate(*tree, geosstrtree_cb, &acc);
 
     ERL_NIF_TERM *arr = \
-        (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*result.size);
+        (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*acc.count);
     int index = 0;
-    for (; index<result.size; index++) {
-        arr[index] = enif_make_resource(env, result.geom[index]);
+    for (; index<acc.count; index++) {
+        //fprintf(stderr, "Points: %d\n", GEOSGeomGetNumPoints(*(acc.geoms[index])));
+        arr[index] = enif_make_resource(env, acc.geoms[index]);
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
 
     enif_free(arr);
+    enif_free(geoms);
     return eterm;
 }
 
@@ -1257,7 +1269,7 @@ geosstrtree_remove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     //char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), *geom);
     char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), geom);
-	printf("Rtree remove: %d.\n", remove); 
+	//printf("Rtree remove: %d.\n", remove); 
 
     return enif_make_tuple2(env,
         enif_make_atom(env, "ok"),

@@ -253,7 +253,7 @@ test_is_valid__false() ->
 % Reader and Writer APIs
 
 test_wktreader_read() ->
-    Pt = {'Point', [10,10]},
+    Pt = {'Point', [10.0, 10.0]},
     WktReader = erlgeom:wktreader_create(),
     Geom1 = erlgeom:wktreader_read(WktReader, "POINT(10.0 10.0)"),
     Pt1 = erlgeom:from_geom(Geom1), 
