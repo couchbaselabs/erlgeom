@@ -1189,6 +1189,7 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         //fprintf(stderr, "Points: %d\n",
         //    GEOSGeomGetNumPoints(*(acc.geoms[index])));
         arr[index] = enif_make_resource(env, acc.geoms[index]);
+        enif_make_resource(env, acc.geoms[index]);
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
@@ -1228,8 +1229,10 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*acc.count);
     int index = 0;
     for (; index<acc.count; index++) {
-        //fprintf(stderr, "Points: %d\n", GEOSGeomGetNumPoints(*(acc.geoms[index])));
+        //fprintf(stderr, "Points: %d\n",
+        //  GEOSGeomGetNumPoints(*(acc.geoms[index])));
         arr[index] = enif_make_resource(env, acc.geoms[index]);
+        enif_make_resource(env, acc.geoms[index]);
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
