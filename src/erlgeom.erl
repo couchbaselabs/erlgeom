@@ -19,10 +19,10 @@
     disjoint/2,
     from_geom/1,
     geosstrtree_create/0,
-    geosstrtree_insert/2,
+    geosstrtree_insert/3,
     geosstrtree_iterate/1,
     geosstrtree_query/2,
-    geosstrtree_remove/2,
+    geosstrtree_remove/3,
     get_centroid/1,
     intersection/2,
     intersects/2,
@@ -65,7 +65,7 @@ disjoint(_Geom1, _Geom2) ->
 geosstrtree_create() ->
     erlang:nif_error(nif_not_loaded).
 
-geosstrtree_insert(_RTree, _Geom) ->
+geosstrtree_insert(_RTree, _Geom, _Eterm) ->
     erlang:nif_error(nif_not_loaded).
 
 geosstrtree_iterate(_RTree) ->
@@ -74,7 +74,7 @@ geosstrtree_iterate(_RTree) ->
 geosstrtree_query(_Rtree, _Geom) ->
     erlang:nif_error(nif_not_loaded).
 
-geosstrtree_remove(_RTree, _Geom) ->
+geosstrtree_remove(_RTree, _Geom, _Eterm) ->
     erlang:nif_error(nif_not_loaded).
 
 get_centroid(_Geom1) ->

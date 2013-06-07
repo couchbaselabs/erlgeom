@@ -159,20 +159,20 @@ test_intersection() ->
 test_geosstrtree_create() ->
     GeosSTRtree = erlgeom:geosstrtree_create(),
     Geoms = erlgeom:geosstrtree_iterate(GeosSTRtree),
-    etap:is(Geoms, {}, "STRTree creation works.").
+    etap:is(Geoms, [], "STRTree creation works.").
 
 test_geosstrtree_insert() ->
     GeosSTRtree = erlgeom:geosstrtree_create(),
     Ls1 = {'LineString', [[1.0,1.0],[5.0,5.0]]},
     Geom1 = erlgeom:to_geom(Ls1),
-    erlgeom:geosstrtree_insert(GeosSTRtree, Geom1),
-    Geoms = erlgeom:geosstrtree_iterate(GeosSTRtree),
-    etap:is(tuple_size(Geoms), 1, "STRTree insertion works.").
+    erlgeom:geosstrtree_insert(GeosSTRtree, Geom1, Ls1),
+    [Element1 | Tail] = erlgeom:geosstrtree_iterate(GeosSTRtree),
+    etap:is(Element1, Ls1, "STRTree insertion works.").
 
 test_geosstrtree_iterate() ->
     GeosSTRtree = erlgeom:geosstrtree_create(),
     Geoms = erlgeom:geosstrtree_iterate(GeosSTRtree),
-    etap:is(tuple_size(Geoms), 0,"STRTree iteration works.").
+    etap:is(length(Geoms), 0,"STRTree iteration works.").
 
 test_geosstrtree_query() ->
     GeosSTRtree = erlgeom:geosstrtree_create(),
@@ -182,22 +182,22 @@ test_geosstrtree_query() ->
     Geom2 = erlgeom:to_geom(Ls2),
     Ls3 = {'LineString', [[3.0,3.0],[6.0,6.0]]},
     Geom3 = erlgeom:to_geom(Ls3),
-    erlgeom:geosstrtree_insert(GeosSTRtree, Geom1),
-    erlgeom:geosstrtree_insert(GeosSTRtree, Geom2),
-    erlgeom:geosstrtree_insert(GeosSTRtree, Geom3),
+    erlgeom:geosstrtree_insert(GeosSTRtree, Geom1, Ls1),
+    erlgeom:geosstrtree_insert(GeosSTRtree, Geom2, Ls2),
+    erlgeom:geosstrtree_insert(GeosSTRtree, Geom3, Ls3),
     Ls4 = {'LineString', [[6.0,6.0],[7.0,7.0]]},
     Geom4 = erlgeom:to_geom(Ls4),
     Geoms = erlgeom:geosstrtree_query(GeosSTRtree, Geom4),
-    etap:is(tuple_size(Geoms), 2, "STRTree query works.").
+    etap:is(length(Geoms), 2, "STRTree query works.").
 
 test_geosstrtree_remove() ->
     GeosSTRtree = erlgeom:geosstrtree_create(),
     Ls1 = {'LineString', [[3.0,3.0],[6.0,6.0]]},
     Geom1 = erlgeom:to_geom(Ls1),
-    erlgeom:geosstrtree_insert(GeosSTRtree, Geom1),
-    erlgeom:geosstrtree_remove(GeosSTRtree, Geom1),
+    erlgeom:geosstrtree_insert(GeosSTRtree, Geom1, Ls1),
+    erlgeom:geosstrtree_remove(GeosSTRtree, Geom1, Ls1),
     Geoms = erlgeom:geosstrtree_query(GeosSTRtree, Geom1),
-    etap:is(tuple_size(Geoms), 0, "STRTree remove works.").
+    etap:is(length(Geoms), 0, "STRTree remove works.").
 
 test_get_centroid() ->
     Pt = {'Point',[3,3]},

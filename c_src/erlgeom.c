@@ -427,21 +427,18 @@ geom_to_eterm(ErlNifEnv *env, const GEOSGeometry *geom)
 typedef struct {
     int count;
     int size;
-    GEOSGeometry** *geoms;
+    ERL_NIF_TERM *elements;
 } GeosSTRtree_acc_t;
 
 void
 geosstrtree_cb(void *item, void *acc) {
-    GEOSGeometry **geom = (GEOSGeometry **) item;
     GeosSTRtree_acc_t *acc_ptr  = (GeosSTRtree_acc_t *) acc;
-    //fprintf(stderr, "Count:%d Size:%d\n", acc_ptr->count, acc_ptr->size);
     ++(acc_ptr->count);
     if (acc_ptr->count == acc_ptr->size) {
         acc_ptr->size *=2;
-        acc_ptr->geoms = enif_realloc(acc_ptr->geoms, acc_ptr->size);
+        acc_ptr->elements = enif_realloc(acc_ptr->elements, acc_ptr->size);
     }
-    //fprintf(stderr, "Points: %d\n", GEOSGeomGetNumPoints(*geom));
-    acc_ptr->geoms[acc_ptr->count-1] = geom;
+    acc_ptr->elements[acc_ptr->count-1] = (ERL_NIF_TERM) item;
 }
 
 
@@ -1121,7 +1118,10 @@ extern void GEOS_DLL GEOSSTRtree_insert(GEOSSTRtree *tree,
                                         void *item);
 
 GeosSTRtree = erlgeom:geosstrtree_create(),
-Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom),
+Element = {element, 1},
+Geom = erlgeom:to_geom({'LineString', [[4,4], [4.5, 4.5], [10,10]]}),
+erlgeom:geosstrtree_insert(GeosSTRtree, Geom, Element).
+ok
 */
 static ERL_NIF_TERM
 geosstrtree_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1129,7 +1129,7 @@ geosstrtree_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSSTRtree **tree;
     GEOSGeometry **geom;
 
-    if (argc != 2) {
+    if (argc != 3) {
         return enif_make_badarg(env);
     }
 
@@ -1141,9 +1141,7 @@ geosstrtree_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    //GEOSSTRtree_insert(*tree, GEOSEnvelope(*geom), *geom);
-    GEOSSTRtree_insert(*tree, GEOSEnvelope(*geom), geom);
-
+    GEOSSTRtree_insert(*tree, GEOSEnvelope(*geom), (void *)argv[2]);
     return enif_make_atom(env, "ok");
 }
 
@@ -1154,9 +1152,15 @@ extern void GEOS_DLL GEOSSTRtree_query(GEOSSTRtree *tree,
                                        void *userdata);
 
 GeosSTRtree = erlgeom:geosstrtree_create(),
-Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom),
+Element1 = {'LineString', [[4.0,4.0], [4.5, 4.5], [10.0,10.0]]},
+Element2 = 17.0,
+Element3 = ["hola"],
+Geom = erlgeom:to_geom(Element1),
+erlgeom:geosstrtree_insert(GeosSTRtree, Geom, Element1),
+erlgeom:geosstrtree_insert(GeosSTRtree, Geom, Element2),
+erlgeom:geosstrtree_insert(GeosSTRtree, Geom, Element3),
 erlgeom:geosstrtree_query(GeosSTRtree, Geom).
-{Geom1, Geom2, Geom3, ..., GeomN}
+[Element1, Element2, Element3]
 */
 static ERL_NIF_TERM
 geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1176,26 +1180,14 @@ geosstrtree_query(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!enif_get_resource(env, argv[1], GEOSGEOM_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env);
     }
-    GEOSGeometry** *geoms = \
-        (GEOSGeometry***) enif_alloc(sizeof(GEOSGeometry**)*100);
-    GeosSTRtree_acc_t acc = {.count=0, .size=100, .geoms=geoms};
+
+    int size = 128;
+    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*size);
+    GeosSTRtree_acc_t acc = {.count=0, .size=size, .elements=arr};
     GEOSSTRtree_query(*tree, *geom, geosstrtree_cb, &acc);
 
-    ERL_NIF_TERM *arr = \
-        (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*acc.count);
-
-    int index = 0;
-    for (; index<acc.count; index++) {
-        //fprintf(stderr, "Points: %d\n",
-        //    GEOSGeomGetNumPoints(*(acc.geoms[index])));
-        arr[index] = enif_make_resource(env, acc.geoms[index]);
-        enif_make_resource(env, acc.geoms[index]);
-    }
-
-    eterm = enif_make_tuple_from_array(env, arr, index);
-
+    eterm = enif_make_list_from_array(env, acc.elements, acc.count);
     enif_free(arr);
-    enif_free(geoms);
     return eterm;
 }
 
@@ -1219,26 +1211,15 @@ geosstrtree_iterate(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if(!enif_get_resource(env, argv[0], GEOSSTRTREE_RESOURCE, (void**)&tree)) {
         return enif_make_badarg(env);
     }
+    
+    int size = 128;
 
-    GEOSGeometry** *geoms = \
-        (GEOSGeometry***) enif_alloc(sizeof(GEOSGeometry**)*100);
-    GeosSTRtree_acc_t acc = {.count=0, .size=100, .geoms=geoms};
+    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*size);
+    GeosSTRtree_acc_t acc = {.count=0, .size=size, .elements=arr};
     GEOSSTRtree_iterate(*tree, geosstrtree_cb, &acc);
 
-    ERL_NIF_TERM *arr = \
-        (ERL_NIF_TERM *) enif_alloc(sizeof(ERL_NIF_TERM)*acc.count);
-    int index = 0;
-    for (; index<acc.count; index++) {
-        //fprintf(stderr, "Points: %d\n",
-        //  GEOSGeomGetNumPoints(*(acc.geoms[index])));
-        arr[index] = enif_make_resource(env, acc.geoms[index]);
-        enif_make_resource(env, acc.geoms[index]);
-    }
-
-    eterm = enif_make_tuple_from_array(env, arr, index);
-
+    eterm = enif_make_list_from_array(env, acc.elements, acc.count);
     enif_free(arr);
-    enif_free(geoms);
     return eterm;
 }
 
@@ -1248,7 +1229,8 @@ extern char GEOS_DLL GEOSSTRtree_remove(GEOSSTRtree *tree,
                                         void *item);
 
 GeosSTRtree = erlgeom:geosstrtree_create(),
-Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom),
+Element = {element, 1},
+Geom = erlgeom:geosstrtree_insert(GeosSTRtree, Geom, Element),
 erlgeom:geosstrtree_remove(GeosSTRtree, Geom).
 {ok, 1}.
 */
@@ -1258,7 +1240,7 @@ geosstrtree_remove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     GEOSSTRtree **tree;
     GEOSGeometry **geom;
 
-    if (argc != 2) {
+    if (argc != 3) {
         return enif_make_badarg(env);
     }
 
@@ -1270,8 +1252,7 @@ geosstrtree_remove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    //char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), *geom);
-    char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), geom);
+    char remove = GEOSSTRtree_remove(*tree, GEOSEnvelope(*geom), (void*)argv[2]);
 	//printf("Rtree remove: %d.\n", remove); 
 
     return enif_make_tuple2(env,
@@ -1321,10 +1302,10 @@ static ErlNifFunc nif_funcs[] =
     {"disjoint", 2, disjoint},
     {"from_geom", 1, from_geom},
     {"geosstrtree_create", 0, geosstrtree_create},
-    {"geosstrtree_insert", 2, geosstrtree_insert},
+    {"geosstrtree_insert", 3, geosstrtree_insert},
     {"geosstrtree_iterate", 1, geosstrtree_iterate},
     {"geosstrtree_query", 2, geosstrtree_query},
-    {"geosstrtree_remove", 2, geosstrtree_remove},
+    {"geosstrtree_remove", 3, geosstrtree_remove},
     {"get_centroid", 1, get_centroid},
     {"intersection", 2, intersection},
     {"intersects", 2, intersects},
