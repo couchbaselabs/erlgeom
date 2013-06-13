@@ -22,7 +22,7 @@
     geosstrtree_insert/3,
     geosstrtree_iterate/1,
     geosstrtree_query/2,
-    geosstrtree_remove/3,
+    %%geosstrtree_remove/3,
     get_centroid/1,
     intersection/2,
     intersects/2,
@@ -74,8 +74,8 @@ geosstrtree_iterate(_RTree) ->
 geosstrtree_query(_Rtree, _Geom) ->
     erlang:nif_error(nif_not_loaded).
 
-geosstrtree_remove(_RTree, _Geom, _Eterm) ->
-    erlang:nif_error(nif_not_loaded).
+%%geosstrtree_remove(_RTree, _Geom, _Eterm) ->
+%%    erlang:nif_error(nif_not_loaded).
 
 get_centroid(_Geom1) ->
     erlang:nif_error(nif_not_loaded).
