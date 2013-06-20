@@ -1155,9 +1155,7 @@ geosstrtree_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
     ERL_NIF_TERM copy = enif_make_copy((**tree).env, argv[2]);
-    enif_make_copy((**tree).env, argv[2]);
     GEOSSTRtree_insert((**tree).tree, GEOSEnvelope(*geom), (void *)copy);
-    //GEOSSTRtree_insert((**tree).tree, GEOSEnvelope(*geom), (void *)argv[2]);
     return enif_make_atom(env, "ok");
 }
 
