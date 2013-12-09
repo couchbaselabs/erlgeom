@@ -58,7 +58,7 @@ init() ->
         case os:getenv("ESCRIPT") of
         "1" ->
             filename:join([filename:dirname(escript:script_name()),
-                "..", "lib", "escript", "erlgeom"]);
+                "..", "lib", "erlgeom"]);
         _ ->
             filename:join(Dir, "erlgeom")
         end
